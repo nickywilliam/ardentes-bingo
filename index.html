@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="fr"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Les Ardentes Bingo</title>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+  :root {
+    --dark:#0D0D0D; --mid:#1A1A1A; --card:#141414; --border:#2A2A2A;
+    --text:#F5F0E8; --muted:#555; --fire:#FF3B00; --amber:#FF9100; --gold:#FFD000;
+    --cw-bg:#1e1e1e; --cw-br:#3a3a3a; --cw-tx:#F5F0E8;
+    --cy-bg:#2a2200; --cy-br:#c8a800; --cy-tx:#FFD84D;
+    --cb-bg:#001529; --cb-br:#1a6fc4; --cb-tx:#5BB8FF;
+    --co-bg:#2a1000; --co-br:#e05c00; --co-tx:#FF8C42;
+    --cj-bg:#001a08; --cj-br:#00c853; --cj-tx:#69ff9a;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--dark);color:var(--text);font-family:'Space Mono',monospace;min-height:100vh;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.5}
+  .wrap{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:20px 14px 60px}
+  header{text-align:center;margin-bottom:22px}
+  .logo-line{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:4px}
+  .flame{font-size:1.8rem;animation:flicker 1.4s ease-in-out infinite alternate}
+  @keyframes flicker{0%{transform:scale(1) rotate(-3deg)}100%{transform:scale(1.1) rotate(3deg);filter:hue-rotate(20deg)}}
+  h1{font-family:'Black Han Sans',sans-serif;font-size:clamp(1.8rem,7vw,3rem);letter-spacing:.04em;line-height:1;background:linear-gradient(135deg,var(--gold) 0%,var(--amber) 40%,var(--fire) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .subtitle{font-size:.65rem;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+  .legend{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:20px}
+  .legend-item{display:flex;align-items:center;gap:6px;background:var(--mid);border:1px solid var(--border);border-radius:100px;padding:4px 11px;font-size:.62rem}
+  .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+  .dot.w{background:#888}.dot.y{background:var(--cy-br)}.dot.b{background:var(--cb-br)}.dot.o{background:var(--co-br)}.dot.j{background:var(--cj-br)}
+  .lpts{font-family:'Black Han Sans',sans-serif;color:var(--gold);margin-left:2px}
+  .save-bar{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+  .btn-save{background:var(--cj-bg);border:1px solid var(--cj-br);color:var(--cj-tx);font-family:'Space Mono',monospace;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;padding:7px 14px;border-radius:6px;cursor:pointer;transition:background .2s}
+  .btn-save:hover{background:#002a10}
+  .btn-export{background:#0d1a2a;border:1px solid var(--cb-br);color:var(--cb-tx);font-family:'Space Mono',monospace;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;padding:7px 14px;border-radius:6px;cursor:pointer;transition:background .2s}
+  .btn-export:hover{background:#102030}
+  .btn-dl{background:#1a0a2a;border:1px solid #9b59b6;color:#d7a8ff;font-family:'Space Mono',monospace;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;padding:7px 14px;border-radius:6px;cursor:pointer;transition:background .2s}
+  .btn-dl:hover{background:#2a1040}
+  #saveFlash{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--cj-bg);border:1px solid var(--cj-br);color:var(--cj-tx);font-family:'Space Mono',monospace;font-size:.7rem;padding:8px 20px;border-radius:100px;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;z-index:500;white-space:nowrap}
+  #saveFlash.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .ro-banner{display:none;align-items:center;justify-content:center;gap:8px;background:#0d1a2a;border:1px solid var(--cb-br);border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:.68rem;color:var(--cb-tx);letter-spacing:.1em}
+  body.read-only .ro-banner{display:flex}
+  body.read-only .save-bar{display:none}
+  body.read-only .cell{cursor:default;pointer-events:none}
+  body.read-only .cell:hover{transform:none;filter:none}
+  body.read-only .joker-banner{display:none}
+  body.read-only .lineup-input-row{display:none}
+  body.read-only .tag-del{display:none}
+  body.read-only #pg-grilles .actions{display:none}
+  .tabs-global{display:flex;gap:6px;margin-bottom:20px}
+  .tab-g{flex:1;padding:9px 6px;text-align:center;font-family:'Space Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;background:var(--mid);border:1px solid var(--border);border-radius:6px;cursor:pointer;color:var(--muted);transition:all .2s}
+  .tab-g.active{background:var(--fire);border-color:var(--fire);color:var(--text)}
+  .tab-g:hover:not(.active){border-color:var(--amber);color:var(--text)}
+  .panel-g{display:none}.panel-g.active{display:block}
+  .player-tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+  .player-tab{flex:1;min-width:80px;padding:10px 6px;text-align:center;font-family:'Black Han Sans',sans-serif;font-size:.85rem;letter-spacing:.06em;background:var(--mid);border:2px solid var(--border);border-radius:8px;cursor:pointer;color:var(--muted);transition:all .2s;position:relative}
+  .player-tab.active{border-color:var(--amber);color:var(--text);background:#1f1a00}
+  .player-tab:hover:not(.active){border-color:#444;color:var(--text)}
+  .p-score{display:block;font-size:.6rem;font-family:'Space Mono',monospace;color:var(--gold);margin-top:2px}
+  .joker-used{position:absolute;top:-5px;right:-5px;background:var(--cj-br);border-radius:50%;width:14px;height:14px;font-size:.5rem;display:none;align-items:center;justify-content:center;color:#000;font-weight:700}
+  .player-tab.has-joker .joker-used{display:flex}
+  .bingo-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:16px}
+  .cell{aspect-ratio:1;border-radius:9px;border:2px solid;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:5px;text-align:center;cursor:pointer;position:relative;transition:transform .15s,filter .15s,box-shadow .2s;overflow:hidden}
+  .cell:hover{transform:scale(1.04);filter:brightness(1.15)}
+  .cell.tw{background:var(--cw-bg);border-color:var(--cw-br)}
+  .cell.ty{background:var(--cy-bg);border-color:var(--cy-br)}
+  .cell.tb{background:var(--cb-bg);border-color:var(--cb-br)}
+  .cell.to{background:var(--co-bg);border-color:var(--co-br)}
+  .cell.tj{background:var(--cj-bg);border-color:var(--cj-br);box-shadow:0 0 14px 1px rgba(0,200,83,.25);animation:jpulse 2s ease-in-out infinite alternate}
+  @keyframes jpulse{0%{box-shadow:0 0 8px 1px rgba(0,200,83,.2)}100%{box-shadow:0 0 18px 3px rgba(0,200,83,.4)}}
+  .cell.cj:hover::before{content:'★ JOKER';position:absolute;inset:0;background:rgba(0,30,10,.85);display:flex;align-items:center;justify-content:center;font-family:'Black Han Sans',sans-serif;font-size:.7rem;color:var(--cj-tx);border-radius:7px;letter-spacing:.08em}
+  .cell.hit.tw{border-color:#fff;box-shadow:0 0 10px 2px rgba(255,255,255,.2)}
+  .cell.hit.ty{border-color:#ffe333;box-shadow:0 0 12px 2px rgba(255,216,0,.4)}
+  .cell.hit.tb{border-color:#5BB8FF;box-shadow:0 0 12px 2px rgba(91,184,255,.4)}
+  .cell.hit.to{border-color:#FF8C42;box-shadow:0 0 12px 2px rgba(255,140,66,.45)}
+  .cell.hit.tj{border-color:#69ff9a;box-shadow:0 0 20px 4px rgba(105,255,154,.5);animation:none}
+  .cell.hit::after{content:'✓';position:absolute;top:3px;right:6px;font-size:.65rem;font-weight:700}
+  .cell.hit.tw::after{color:#fff}.cell.hit.ty::after{color:var(--cy-tx)}.cell.hit.tb::after{color:var(--cb-tx)}.cell.hit.to::after{color:var(--co-tx)}.cell.hit.tj::after{color:var(--cj-tx)}
+  .cn{font-size:clamp(.48rem,1.5vw,.66rem);line-height:1.2;word-break:break-word;font-weight:700;pointer-events:none}
+  .cell.tw .cn{color:var(--cw-tx)}.cell.ty .cn{color:var(--cy-tx)}.cell.tb .cn{color:var(--cb-tx)}.cell.to .cn{color:var(--co-tx)}.cell.tj .cn{color:var(--cj-tx)}
+  .cl{font-size:clamp(.36rem,1vw,.5rem);letter-spacing:.04em;text-transform:uppercase;opacity:.5;pointer-events:none;margin-top:2px}
+  .cell.tw .cl{color:var(--cw-tx)}.cell.ty .cl{color:var(--cy-tx)}.cell.tb .cl{color:var(--cb-tx)}.cell.to .cl{color:var(--co-tx)}.cell.tj .cl{color:var(--cj-tx)}
+  .cp{position:absolute;bottom:3px;right:5px;font-family:'Black Han Sans',sans-serif;font-size:.62rem;opacity:.4}
+  .cell.tw .cp{color:var(--cw-tx)}.cell.ty .cp{color:var(--cy-tx)}.cell.tb .cp{color:var(--cb-tx)}.cell.to .cp{color:var(--co-tx)}.cell.tj .cp{color:var(--cj-tx);opacity:.7}
+  .cph{font-size:.52rem;opacity:.3;pointer-events:none;color:var(--cw-tx)}
+  .cjs{position:absolute;top:3px;left:5px;font-size:.55rem;color:var(--cj-tx);pointer-events:none}
+  .cell.editing{filter:brightness(1.2)}
+  .cell input{background:transparent;border:none;outline:none;font-family:'Space Mono',monospace;font-weight:700;font-size:clamp(.48rem,1.5vw,.66rem);text-align:center;width:100%}
+  .cell.tw input,.cell.tj input{color:var(--cw-tx)}.cell.ty input{color:var(--cy-tx)}.cell.tb input{color:var(--cb-tx)}.cell.to input{color:var(--co-tx)}
+  .joker-banner{display:flex;align-items:center;justify-content:space-between;background:var(--cj-bg);border:1px solid var(--cj-br);border-radius:8px;padding:10px 16px;margin-bottom:14px;gap:12px;flex-wrap:wrap}
+  .joker-banner.used{border-color:#1a5c33;background:#000f06}
+  .ji{font-size:.7rem;color:var(--cj-tx)}.ji strong{font-family:'Black Han Sans',sans-serif;font-size:.9rem}.ji.ul{color:#1a7a3f}
+  .bjc{background:transparent;border:1px solid #1a5c33;color:#1a7a3f;font-family:'Space Mono',monospace;font-size:.6rem;padding:5px 10px;border-radius:5px;cursor:pointer;letter-spacing:.1em;text-transform:uppercase;transition:all .2s}
+  .bjc:hover{border-color:var(--fire);color:var(--fire)}
+  .score-bar{display:flex;align-items:center;justify-content:space-between;background:var(--mid);border:1px solid var(--border);border-radius:8px;padding:12px 18px;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+  .sb{text-align:center}
+  .sv{font-family:'Black Han Sans',sans-serif;font-size:2rem;background:linear-gradient(135deg,var(--gold),var(--fire));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .sl{font-size:.6rem;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
+  .bingo-badge{font-family:'Black Han Sans',sans-serif;font-size:1rem;letter-spacing:.1em;padding:5px 16px;border-radius:4px;background:linear-gradient(135deg,var(--gold),var(--fire));color:var(--dark);display:none;animation:pop .4s cubic-bezier(.175,.885,.32,1.275)}
+  .bingo-badge.show{display:block}
+  @keyframes pop{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
+  .sec-title{font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:10px}
+  .sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+  .lineup-input-row{display:flex;gap:8px;margin-bottom:12px}
+  .lineup-input{flex:1;background:var(--mid);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:.78rem;padding:9px 13px;border-radius:6px;outline:none;transition:border-color .2s}
+  .lineup-input:focus{border-color:var(--amber)}
+  .btn{background:var(--fire);border:none;color:var(--text);font-family:'Black Han Sans',sans-serif;font-size:.82rem;letter-spacing:.08em;padding:9px 16px;border-radius:6px;cursor:pointer;transition:background .2s,transform .1s;white-space:nowrap}
+  .btn:hover{background:var(--amber)}.btn:active{transform:scale(.97)}
+  .btn.sec{background:var(--mid);border:1px solid var(--border);color:var(--muted)}
+  .btn.sec:hover{border-color:var(--amber);color:var(--text)}
+  .lineup-tags{display:flex;flex-wrap:wrap;gap:7px;min-height:30px;margin-bottom:18px}
+  .tag{background:var(--mid);border:1px solid var(--border);border-radius:100px;padding:3px 11px;font-size:.66rem;display:flex;align-items:center;gap:5px;animation:si .2s ease}
+  @keyframes si{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+  .tag.match{border-color:#5BB8FF;color:#5BB8FF}
+  .tag-del{cursor:pointer;color:var(--muted)}.tag-del:hover{color:var(--fire)}
+  .lb{display:flex;flex-direction:column;gap:10px}
+  .lb-row{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px}
+  .lb-row.r1{border-color:var(--gold);background:#1a1500}.lb-row.r2{border-color:#aaa;background:#111}.lb-row.r3{border-color:var(--co-br);background:#110800}
+  .lb-rank{font-family:'Black Han Sans',sans-serif;font-size:1.4rem;width:30px;text-align:center}
+  .lb-row.r1 .lb-rank{color:var(--gold)}.lb-row.r2 .lb-rank{color:#ccc}.lb-row.r3 .lb-rank{color:var(--co-tx)}
+  .lb-name{font-family:'Black Han Sans',sans-serif;font-size:1rem;flex:1}
+  .lb-det{font-size:.62rem;color:var(--muted);margin-top:1px}
+  .lb-score{font-family:'Black Han Sans',sans-serif;font-size:1.6rem}
+  .lb-row.r1 .lb-score{color:var(--gold)}.lb-row.r2 .lb-score{color:#ddd}.lb-row.r3 .lb-score{color:var(--co-tx)}
+  .lb-score.other{color:var(--text)}
+  .lb-bingo{font-size:.7rem;color:var(--gold);margin-left:6px}
+  .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+  #confetti{position:fixed;inset:0;pointer-events:none;z-index:999}
+  .empty{text-align:center;padding:30px;color:var(--muted);font-size:.72rem}
+  .cell-menu{animation:si .12s ease}
+</style>
+
+<script id="__b__">window.__S__={"players":[{"name":"MikiMike","cells":[{"base":"yellow","type":"yellow","name":"Franglish","hit":false},{"base":"white","type":"white","name":"RK","hit":false},{"base":"yellow","type":"yellow","name":"Keblack","hit":false},{"base":"white","type":"white","name":"L2B","hit":false},{"base":"yellow","type":"yellow","name":"Niska","hit":false},{"base":"white","type":"white","name":"RNboi","hit":false},{"base":"blue","type":"blue","name":"Makala","hit":false},{"base":"white","type":"white","name":"Genezio","hit":true},{"base":"blue","type":"blue","name":"Asap Rocky","hit":false},{"base":"white","type":"white","name":"SDM","hit":false},{"base":"yellow","type":"yellow","name":"Jul","hit":false},{"base":"white","type":"white","name":"Landy","hit":false},{"base":"orange","type":"orange","name":"Kelhani","hit":false},{"base":"white","type":"white","name":"Leto","hit":true},{"base":"yellow","type":"yellow","name":"Josman","hit":true},{"base":"white","type":"white","name":"La Fouine","hit":false},{"base":"blue","type":"blue","name":"Dystinct","hit":false},{"base":"white","type":"white","name":"Damso","hit":false},{"base":"blue","type":"blue","name":"Sean Paul","hit":false},{"base":"white","type":"joker","name":"Steve Aoki","hit":false},{"base":"yellow","type":"yellow","name":"Kulturr","hit":false},{"base":"white","type":"white","name":"Theodora","hit":true},{"base":"yellow","type":"yellow","name":"Yorssy","hit":false},{"base":"white","type":"white","name":"Hamza","hit":false},{"base":"yellow","type":"yellow","name":"Joe Dwet Filé","hit":false}],"jokerIndex":19},{"name":"Big MAQ","cells":[{"base":"yellow","type":"yellow","name":"Ninho","hit":false},{"base":"white","type":"white","name":"Keblack","hit":false},{"base":"yellow","type":"yellow","name":"ZKR","hit":true},{"base":"white","type":"white","name":"Shay","hit":false},{"base":"yellow","type":"yellow","name":"Leto","hit":true},{"base":"white","type":"white","name":"Somyke","hit":false},{"base":"blue","type":"blue","name":"Metro Boomin","hit":false},{"base":"white","type":"white","name":"La fève","hit":false},{"base":"blue","type":"blue","name":"Kendrick Lamar","hit":false},{"base":"white","type":"white","name":"Travis Scott","hit":false},{"base":"yellow","type":"yellow","name":"Orelsan","hit":false},{"base":"white","type":"white","name":"Naza","hit":true},{"base":"orange","type":"orange","name":"Shenseea","hit":false},{"base":"white","type":"white","name":"Naps","hit":false},{"base":"yellow","type":"yellow","name":"Gradur","hit":false},{"base":"white","type":"white","name":"Eve la Marka","hit":false},{"base":"blue","type":"blue","name":"Himra","hit":false},{"base":"white","type":"white","name":"Kaaris","hit":false},{"base":"blue","type":"blue","name":"Hamza","hit":false},{"base":"white","type":"white","name":"Sara Landry","hit":false},{"base":"yellow","type":"yellow","name":"Tiakola","hit":false},{"base":"white","type":"white","name":"Dj Snake","hit":false},{"base":"yellow","type":"yellow","name":"SCH","hit":false},{"base":"white","type":"white","name":"TRZ","hit":false},{"base":"yellow","type":"yellow","name":"SDM","hit":false}],"jokerIndex":-1},{"name":"DEEPA","cells":[{"base":"yellow","type":"yellow","name":"SCH","hit":false},{"base":"white","type":"white","name":"Sarah Landry","hit":false},{"base":"yellow","type":"yellow","name":"Maureen","hit":false},{"base":"white","type":"white","name":"Hugel","hit":false},{"base":"yellow","type":"yellow","name":"Ino Casablanca","hit":false},{"base":"white","type":"white","name":"Gambi","hit":false},{"base":"blue","type":"blue","name":"Burna Boy","hit":false},{"base":"white","type":"white","name":"Shenseea","hit":false},{"base":"blue","type":"blue","name":"Metro Boomin","hit":false},{"base":"white","type":"white","name":"NLE Choppa","hit":false},{"base":"yellow","type":"yellow","name":"Riles","hit":true},{"base":"white","type":"white","name":"Luciano","hit":false},{"base":"orange","type":"orange","name":"Tyla","hit":false},{"base":"white","type":"white","name":"Roddy Ricch","hit":false},{"base":"yellow","type":"yellow","name":"Ninho","hit":false},{"base":"white","type":"white","name":"Kendrick Lamar","hit":false},{"base":"blue","type":"blue","name":"Amelie Lens","hit":false},{"base":"white","type":"white","name":"Charlotte de Witte","hit":true},{"base":"blue","type":"blue","name":"Storzmí","hit":false},{"base":"white","type":"white","name":"Travis Scott","hit":false},{"base":"yellow","type":"yellow","name":"La Mano 1.9","hit":true},{"base":"white","type":"white","name":"Vladimir Cauchemar","hit":true},{"base":"yellow","type":"yellow","name":"Dakeez","hit":false},{"base":"white","type":"white","name":"RNboi","hit":false},{"base":"yellow","type":"yellow","name":"SDM","hit":false}],"jokerIndex":-1},{"name":"CéCé","cells":[{"base":"yellow","type":"yellow","name":"Ninho","hit":false},{"base":"white","type":"white","name":"Sean Paul","hit":false},{"base":"yellow","type":"yellow","name":"SCH","hit":false},{"base":"white","type":"joker","name":"Skrillex","hit":false},{"base":"yellow","type":"yellow","name":"Leto","hit":true},{"base":"white","type":"white","name":"Isha & Limsa","hit":false},{"base":"blue","type":"blue","name":"Damso","hit":false},{"base":"white","type":"white","name":"Billie Eilish","hit":false},{"base":"blue","type":"blue","name":"Nemzzz","hit":false},{"base":"white","type":"white","name":"Kaytranada","hit":false},{"base":"yellow","type":"yellow","name":"Josman","hit":true},{"base":"white","type":"white","name":"Bob Sinclar","hit":false},{"base":"orange","type":"orange","name":"Doechii","hit":false},{"base":"white","type":"white","name":"The Weeknd","hit":false},{"base":"yellow","type":"yellow","name":"Gradur","hit":false},{"base":"white","type":"white","name":"Little Simz","hit":false},{"base":"blue","type":"blue","name":"Hamza","hit":false},{"base":"white","type":"white","name":"Bruno Mars","hit":false},{"base":"blue","type":"blue","name":"Rema","hit":false},{"base":"white","type":"white","name":"Aminé","hit":false},{"base":"yellow","type":"yellow","name":"Niska","hit":false},{"base":"white","type":"white","name":"Theodora","hit":true},{"base":"yellow","type":"yellow","name":"Gros Mo","hit":false},{"base":"white","type":"white","name":"Amaarae","hit":false},{"base":"yellow","type":"yellow","name":"Huntrill","hit":false}],"jokerIndex":3},{"name":"Jini","cells":[{"base":"yellow","type":"yellow","name":"Ninho","hit":false},{"base":"white","type":"white","name":"Kaytranada","hit":false},{"base":"yellow","type":"yellow","name":"SCH","hit":false},{"base":"white","type":"white","name":"Jorja Smith","hit":false},{"base":"yellow","type":"yellow","name":"Genezio","hit":true},{"base":"white","type":"white","name":"Amaarae","hit":false},{"base":"blue","type":"blue","name":"Makala","hit":false},{"base":"white","type":"white","name":"Hamza","hit":false},{"base":"blue","type":"blue","name":"Asap Rocky","hit":false},{"base":"white","type":"white","name":"Theodora","hit":true},{"base":"yellow","type":"yellow","name":"Gradur","hit":false},{"base":"white","type":"joker","name":"Fred Again","hit":false},{"base":"orange","type":"orange","name":"Doechii","hit":false},{"base":"white","type":"white","name":"Oboy","hit":false},{"base":"yellow","type":"yellow","name":"Josman","hit":true},{"base":"white","type":"white","name":"Aminé","hit":false},{"base":"blue","type":"blue","name":"Little Simz","hit":false},{"base":"white","type":"white","name":"Damso","hit":false},{"base":"blue","type":"blue","name":"Tyler The Creator","hit":false},{"base":"white","type":"white","name":"La Fouine","hit":false},{"base":"yellow","type":"yellow","name":"Tiakola","hit":false},{"base":"white","type":"white","name":"Isha & Limsa","hit":false},{"base":"yellow","type":"yellow","name":"Naza","hit":true},{"base":"white","type":"white","name":"Dinos","hit":false},{"base":"yellow","type":"yellow","name":"SDM","hit":false}],"jokerIndex":11}],"cur":0,"lineup":["aya nakamure","future","playboi carti","plk","i hate models","theodora","zkr","naza","genezio","josman","vladimir cauchemar","la mano 1.9","charlotte de witte","sniper","sinik","rohff","booba","nono la grinta","fianso","kerchak","menace santana","bigflo & oli","riles","nico moreno","kalash criminel","xvbarbar","djadja & dinaz","so la lune","miki","la rvfleuze","leto","holy priest","esdeekid","lost frequencies","todiefor","vald","black eyed peas"]};window.__RO__=true;</script>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+<div class="wrap">
+  <div class="ro-banner">👁 Mode spectateur — lecture seule</div>
+  <div id="saveFlash" class="">✓ Sauvegardé</div>
+
+  <header>
+    <div class="logo-line"><span class="flame">🔥</span><h1>ARDENTES BINGO</h1><span class="flame">🔥</span></div>
+    <p class="subtitle">5 joueurs · Prédis la lineup · Gagne des points</p>
+  </header>
+
+  <div class="legend">
+    <div class="legend-item"><div class="dot w"></div> Quelconque <span class="lpts">1pt</span></div>
+    <div class="legend-item"><div class="dot y"></div> IDF/Hors-IDF <span class="lpts">2pts</span></div>
+    <div class="legend-item"><div class="dot b"></div> Hors France <span class="lpts">3pts</span></div>
+    <div class="legend-item"><div class="dot o"></div> Féminin Hors UE <span class="lpts">5pts</span></div>
+    <div class="legend-item"><div class="dot j"></div> ★ Joker <span class="lpts">10pts</span></div>
+  </div>
+
+  <div class="save-bar">
+    <button class="btn-save" onclick="saveState()">💾 Sauvegarder</button>
+    <button class="btn-export" onclick="doExport(true)">📤 Partager (lecture seule)</button>
+    <button class="btn-dl" onclick="doExport(false)">📥 Exporter (modifiable)</button>
+  </div>
+
+  <div class="tabs-global">
+    <div class="tab-g active" onclick="switchTab('grilles')">① Grilles</div>
+    <div class="tab-g" onclick="switchTab('lineup')">② Lineup</div>
+    <div class="tab-g" onclick="calcResults();switchTab('resultats')">③ Résultats</div>
+  </div>
+
+  <!-- GRILLES -->
+  <div class="panel-g active" id="pg-grilles">
+    <div class="player-tabs" id="playerTabs"><div class="player-tab has-joker" onclick="selectPlayer(0)">
+      <span class="joker-used">★</span>MikiMike<span class="p-score">5 pts</span>
+    </div><div class="player-tab" onclick="selectPlayer(1)">
+      <span class="joker-used">★</span>Big MAQ<span class="p-score">5 pts</span>
+    </div><div class="player-tab" onclick="selectPlayer(2)">
+      <span class="joker-used">★</span>DEEPA<span class="p-score">6 pts</span>
+    </div><div class="player-tab has-joker" onclick="selectPlayer(3)">
+      <span class="joker-used">★</span>CéCé<span class="p-score">5 pts</span>
+    </div><div class="player-tab active has-joker" onclick="selectPlayer(4)">
+      <span class="joker-used">★</span>Jini<span class="p-score">7 pts</span>
+    </div></div>
+    <div id="jokerBanner"><div class="joker-banner used"><div class="ji ul">★ Joker placé sur <strong>Fred Again</strong></div><button class="bjc" onclick="cancelJoker()">Annuler le joker</button></div></div>
+    <div class="score-bar">
+      <div class="sb"><div class="sl">Score actuel</div><div class="sv" id="scoreVal">7</div></div>
+      <div class="sb"><div class="sl">Artistes trouvés</div><div class="sv"><span id="hitCount">4</span>/<span id="totalCells">25</span></div></div>
+      <div class="bingo-badge" id="bingoBadge">🎉 BINGO !</div>
+    </div>
+    <div class="bingo-grid" id="grid"><div class="cell ty" data-i="0"><span class="cn">Ninho</span><span class="cl">IDF/Hors-IDF</span><span class="cp">2pt</span></div><div class="cell tw" data-i="1"><span class="cn">Kaytranada</span><span class="cl">Quelconque</span><span class="cp">1pt</span></div><div class="cell ty" data-i="2"><span class="cn">SCH</span><span class="cl">IDF/Hors-IDF</span><span class="cp">2pt</span></div><div class="cell tw" data-i="3"><span class="cn">Jorja Smith</span><span class="cl">Quelconque</span><span class="cp">1pt</span></div><div class="cell ty hit" data-i="4"><span class="cn">Genezio</span><span class="cl">IDF/Hors-IDF</span><span class="cp">2pt</span></div><div class="cell tw" data-i="5"><span class="cn">Amaarae</span><span class="cl">Quelconque</span><span class="cp">1pt</span></div><div class="cell tb" data-i="6"><span class="cn">Makala</span><span class="cl">Hors France</span><span class="cp">3pt</span></div><div class="cell tw" data-i="7"><span class="cn">Hamza</span><span class="cl">Quelconque</span><span class="cp">1pt</span></div><div class="cell tb" data-i="8"><span class="cn">Asap Rocky</span><span class="cl">Hors France</span><span class="cp">3pt</span></div><div class="cell tw hit" data-i="9"><span class="cn">Theodora</span><span class="cl">Quelconque</span><span class="cp">1pt</span></div><div class="cell ty" data-i="10"><span class="cn">Gradur</span><span class="cl">IDF/Hors-IDF</span><span class="cp">2pt</span></div><div class="cell tj" data-i="11"><span class="cjs">★</span><span class="cn">Fred Again</span><span class="cl">★ Joker</span><span class="cp">10pt</span></div><div class="cell to" data-i="12"><span class="cn">Doechii</span><span class="cl">Féminin Hors UE</span><span class="cp">5pt</span></div><div class="cell tw" data-i="13"><span class="cn">Oboy</span><span class="cl">Quelconque</span><span class="cp">1pt</span></div><div class="cell ty hit" data-i="14"><span class="cn">Josman</span><span class="cl">IDF/Hors-IDF</span><span class="cp">2pt</span></div><div class="cell tw" data-i="15"><span class="cn">Aminé</span><span class="cl">Quelconque</span><span class="cp">1pt</span></div><div class="cell tb" data-i="16"><span class="cn">Little Simz</span><span class="cl">Hors France</span><span class="cp">3pt</span></div><div class="cell tw" data-i="17"><span class="cn">Damso</span><span class="cl">Quelconque</span><span class="cp">1pt</span></div><div class="cell tb" data-i="18"><span class="cn">Tyler The Creator</span><span class="cl">Hors France</span><span class="cp">3pt</span></div><div class="cell tw" data-i="19"><span class="cn">La Fouine</span><span class="cl">Quelconque</span><span class="cp">1pt</span></div><div class="cell ty" data-i="20"><span class="cn">Tiakola</span><span class="cl">IDF/Hors-IDF</span><span class="cp">2pt</span></div><div class="cell tw" data-i="21"><span class="cn">Isha &amp; Limsa</span><span class="cl">Quelconque</span><span class="cp">1pt</span></div><div class="cell ty hit" data-i="22"><span class="cn">Naza</span><span class="cl">IDF/Hors-IDF</span><span class="cp">2pt</span></div><div class="cell tw" data-i="23"><span class="cn">Dinos</span><span class="cl">Quelconque</span><span class="cp">1pt</span></div><div class="cell ty" data-i="24"><span class="cn">SDM</span><span class="cl">IDF/Hors-IDF</span><span class="cp">2pt</span></div></div>
+    <div class="actions">
+      <button class="btn" onclick="switchTab('lineup')">Lineup →</button>
+    </div>
+  </div>
+
+  <!-- LINEUP -->
+  <div class="panel-g" id="pg-lineup">
+    <div class="sec-title">Artistes confirmés aux Ardentes</div>
+    <div class="lineup-input-row">
+      <input class="lineup-input" id="lineupInput" placeholder="Ex: Hamza, Aya Nakamura…" onkeydown="if(event.key==='Enter')addArtist()">
+      <button class="btn" onclick="addArtist()">Ajouter</button>
+    </div>
+    <div class="lineup-tags" id="lineupTags"><div class="tag">aya nakamure<span class="tag-del" onclick="removeArtist('aya nakamure')">×</span></div><div class="tag">future<span class="tag-del" onclick="removeArtist('future')">×</span></div><div class="tag">playboi carti<span class="tag-del" onclick="removeArtist('playboi carti')">×</span></div><div class="tag">plk<span class="tag-del" onclick="removeArtist('plk')">×</span></div><div class="tag">i hate models<span class="tag-del" onclick="removeArtist('i hate models')">×</span></div><div class="tag match">theodora ✓<span class="tag-del" onclick="removeArtist('theodora')">×</span></div><div class="tag match">zkr ✓<span class="tag-del" onclick="removeArtist('zkr')">×</span></div><div class="tag match">naza ✓<span class="tag-del" onclick="removeArtist('naza')">×</span></div><div class="tag match">genezio ✓<span class="tag-del" onclick="removeArtist('genezio')">×</span></div><div class="tag match">josman ✓<span class="tag-del" onclick="removeArtist('josman')">×</span></div><div class="tag match">vladimir cauchemar ✓<span class="tag-del" onclick="removeArtist('vladimir cauchemar')">×</span></div><div class="tag match">la mano 1.9 ✓<span class="tag-del" onclick="removeArtist('la mano 1.9')">×</span></div><div class="tag match">charlotte de witte ✓<span class="tag-del" onclick="removeArtist('charlotte de witte')">×</span></div><div class="tag">sniper<span class="tag-del" onclick="removeArtist('sniper')">×</span></div><div class="tag">sinik<span class="tag-del" onclick="removeArtist('sinik')">×</span></div><div class="tag">rohff<span class="tag-del" onclick="removeArtist('rohff')">×</span></div><div class="tag">booba<span class="tag-del" onclick="removeArtist('booba')">×</span></div><div class="tag">nono la grinta<span class="tag-del" onclick="removeArtist('nono la grinta')">×</span></div><div class="tag">fianso<span class="tag-del" onclick="removeArtist('fianso')">×</span></div><div class="tag">kerchak<span class="tag-del" onclick="removeArtist('kerchak')">×</span></div><div class="tag">menace santana<span class="tag-del" onclick="removeArtist('menace santana')">×</span></div><div class="tag">bigflo &amp; oli<span class="tag-del" onclick="removeArtist('bigflo &amp; oli')">×</span></div><div class="tag match">riles ✓<span class="tag-del" onclick="removeArtist('riles')">×</span></div><div class="tag">nico moreno<span class="tag-del" onclick="removeArtist('nico moreno')">×</span></div><div class="tag">kalash criminel<span class="tag-del" onclick="removeArtist('kalash criminel')">×</span></div><div class="tag">xvbarbar<span class="tag-del" onclick="removeArtist('xvbarbar')">×</span></div><div class="tag">djadja &amp; dinaz<span class="tag-del" onclick="removeArtist('djadja &amp; dinaz')">×</span></div><div class="tag">so la lune<span class="tag-del" onclick="removeArtist('so la lune')">×</span></div><div class="tag">miki<span class="tag-del" onclick="removeArtist('miki')">×</span></div><div class="tag">la rvfleuze<span class="tag-del" onclick="removeArtist('la rvfleuze')">×</span></div><div class="tag match">leto ✓<span class="tag-del" onclick="removeArtist('leto')">×</span></div><div class="tag">holy priest<span class="tag-del" onclick="removeArtist('holy priest')">×</span></div><div class="tag">esdeekid<span class="tag-del" onclick="removeArtist('esdeekid')">×</span></div><div class="tag">lost frequencies<span class="tag-del" onclick="removeArtist('lost frequencies')">×</span></div><div class="tag">todiefor<span class="tag-del" onclick="removeArtist('todiefor')">×</span></div><div class="tag">vald<span class="tag-del" onclick="removeArtist('vald')">×</span></div><div class="tag">black eyed peas<span class="tag-del" onclick="removeArtist('black eyed peas')">×</span></div></div>
+    <div class="actions">
+      <button class="btn sec" onclick="switchTab('grilles')">← Retour</button>
+      <button class="btn" onclick="calcResults();switchTab('resultats')">Voir les résultats →</button>
+    </div>
+  </div>
+
+  <!-- RÉSULTATS -->
+  <div class="panel-g" id="pg-resultats">
+    <div class="sec-title">Classement</div>
+    <div id="leaderboard" class="lb"><div class="lb-row r1">
+      <div class="lb-rank">🥇</div>
+      <div style="flex:1"><div class="lb-name">Jini</div><div class="lb-det">4/25 artistes</div></div>
+      <div class="lb-score">7</div>
+    </div><div class="lb-row r2">
+      <div class="lb-rank">🥈</div>
+      <div style="flex:1"><div class="lb-name">DEEPA</div><div class="lb-det">4/25 artistes</div></div>
+      <div class="lb-score">6</div>
+    </div><div class="lb-row r3">
+      <div class="lb-rank">🥉</div>
+      <div style="flex:1"><div class="lb-name">MikiMike</div><div class="lb-det">4/25 artistes</div></div>
+      <div class="lb-score">5</div>
+    </div><div class="lb-row">
+      <div class="lb-rank"><span style="color:var(--muted);font-size:1rem">#4</span></div>
+      <div style="flex:1"><div class="lb-name">Big MAQ</div><div class="lb-det">3/25 artistes</div></div>
+      <div class="lb-score other">5</div>
+    </div><div class="lb-row">
+      <div class="lb-rank"><span style="color:var(--muted);font-size:1rem">#5</span></div>
+      <div style="flex:1"><div class="lb-name">CéCé</div><div class="lb-det">3/25 artistes</div></div>
+      <div class="lb-score other">5</div>
+    </div></div>
+    <div style="margin-top:20px">
+      <div class="sec-title">Détail par joueur</div>
+      <div id="playerDetail"><div style="margin-bottom:20px"><div class="sec-title" style="margin-bottom:10px">MikiMike — 5 pts</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px"><div style="background:var(--card);border:1px solid #555;border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:#ddd">Genezio</div><div style="font-size:.55rem;opacity:.45;text-transform:uppercase;margin:2px 0">Quelconque</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--gold)">+1</div></div><div style="background:var(--card);border:1px solid #555;border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:#ddd">Leto</div><div style="font-size:.55rem;opacity:.45;text-transform:uppercase;margin:2px 0">Quelconque</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--gold)">+1</div></div><div style="background:var(--card);border:1px solid var(--cy-br);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--cy-tx)">Josman</div><div style="font-size:.55rem;opacity:.45;text-transform:uppercase;margin:2px 0">IDF/Hors-IDF</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--gold)">+2</div></div><div style="background:var(--card);border:1px solid #555;border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:#ddd">Theodora</div><div style="font-size:.55rem;opacity:.45;text-transform:uppercase;margin:2px 0">Quelconque</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--gold)">+1</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Franglish</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">RK</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Keblack</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">L2B</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Niska</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">RNboi</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Makala</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Asap Rocky</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">SDM</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Jul</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Landy</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Kelhani</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">La Fouine</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Dystinct</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Damso</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Sean Paul</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Steve Aoki</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Kulturr</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Yorssy</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Hamza</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Joe Dwet Filé</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div></div></div><div style="margin-bottom:20px"><div class="sec-title" style="margin-bottom:10px">Big MAQ — 5 pts</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px"><div style="background:var(--card);border:1px solid var(--cy-br);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--cy-tx)">ZKR</div><div style="font-size:.55rem;opacity:.45;text-transform:uppercase;margin:2px 0">IDF/Hors-IDF</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--gold)">+2</div></div><div style="background:var(--card);border:1px solid var(--cy-br);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--cy-tx)">Leto</div><div style="font-size:.55rem;opacity:.45;text-transform:uppercase;margin:2px 0">IDF/Hors-IDF</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--gold)">+2</div></div><div style="background:var(--card);border:1px solid #555;border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:#ddd">Naza</div><div style="font-size:.55rem;opacity:.45;text-transform:uppercase;margin:2px 0">Quelconque</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--gold)">+1</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Ninho</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Keblack</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Shay</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Somyke</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Metro Boomin</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">La fève</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Kendrick Lamar</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Travis Scott</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Orelsan</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Shenseea</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Naps</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Gradur</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Eve la Marka</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Himra</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Kaaris</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Hamza</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Sara Landry</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Tiakola</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Dj Snake</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">SCH</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">TRZ</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">SDM</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div></div></div><div style="margin-bottom:20px"><div class="sec-title" style="margin-bottom:10px">DEEPA — 6 pts</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px"><div style="background:var(--card);border:1px solid var(--cy-br);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--cy-tx)">Riles</div><div style="font-size:.55rem;opacity:.45;text-transform:uppercase;margin:2px 0">IDF/Hors-IDF</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--gold)">+2</div></div><div style="background:var(--card);border:1px solid #555;border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:#ddd">Charlotte de Witte</div><div style="font-size:.55rem;opacity:.45;text-transform:uppercase;margin:2px 0">Quelconque</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--gold)">+1</div></div><div style="background:var(--card);border:1px solid var(--cy-br);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--cy-tx)">La Mano 1.9</div><div style="font-size:.55rem;opacity:.45;text-transform:uppercase;margin:2px 0">IDF/Hors-IDF</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--gold)">+2</div></div><div style="background:var(--card);border:1px solid #555;border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:#ddd">Vladimir Cauchemar</div><div style="font-size:.55rem;opacity:.45;text-transform:uppercase;margin:2px 0">Quelconque</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--gold)">+1</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">SCH</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Sarah Landry</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Maureen</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Hugel</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Ino Casablanca</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Gambi</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Burna Boy</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Shenseea</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Metro Boomin</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">NLE Choppa</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Luciano</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Tyla</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Roddy Ricch</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Ninho</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Kendrick Lamar</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Amelie Lens</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Storzmí</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Travis Scott</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Dakeez</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">RNboi</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">SDM</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div></div></div><div style="margin-bottom:20px"><div class="sec-title" style="margin-bottom:10px">CéCé — 5 pts</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px"><div style="background:var(--card);border:1px solid var(--cy-br);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--cy-tx)">Leto</div><div style="font-size:.55rem;opacity:.45;text-transform:uppercase;margin:2px 0">IDF/Hors-IDF</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--gold)">+2</div></div><div style="background:var(--card);border:1px solid var(--cy-br);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--cy-tx)">Josman</div><div style="font-size:.55rem;opacity:.45;text-transform:uppercase;margin:2px 0">IDF/Hors-IDF</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--gold)">+2</div></div><div style="background:var(--card);border:1px solid #555;border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:#ddd">Theodora</div><div style="font-size:.55rem;opacity:.45;text-transform:uppercase;margin:2px 0">Quelconque</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--gold)">+1</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Ninho</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Sean Paul</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">SCH</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Skrillex</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Isha &amp; Limsa</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Damso</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Billie Eilish</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Nemzzz</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Kaytranada</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Bob Sinclar</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Doechii</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">The Weeknd</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Gradur</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Little Simz</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Hamza</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Bruno Mars</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Rema</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Aminé</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Niska</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Gros Mo</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Amaarae</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Huntrill</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div></div></div><div style="margin-bottom:20px"><div class="sec-title" style="margin-bottom:10px">Jini — 7 pts</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px"><div style="background:var(--card);border:1px solid var(--cy-br);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--cy-tx)">Genezio</div><div style="font-size:.55rem;opacity:.45;text-transform:uppercase;margin:2px 0">IDF/Hors-IDF</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--gold)">+2</div></div><div style="background:var(--card);border:1px solid #555;border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:#ddd">Theodora</div><div style="font-size:.55rem;opacity:.45;text-transform:uppercase;margin:2px 0">Quelconque</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--gold)">+1</div></div><div style="background:var(--card);border:1px solid var(--cy-br);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--cy-tx)">Josman</div><div style="font-size:.55rem;opacity:.45;text-transform:uppercase;margin:2px 0">IDF/Hors-IDF</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--gold)">+2</div></div><div style="background:var(--card);border:1px solid var(--cy-br);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--cy-tx)">Naza</div><div style="font-size:.55rem;opacity:.45;text-transform:uppercase;margin:2px 0">IDF/Hors-IDF</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--gold)">+2</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Ninho</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Kaytranada</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">SCH</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Jorja Smith</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Amaarae</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Makala</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Hamza</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Asap Rocky</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Gradur</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Fred Again</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Doechii</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Oboy</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Aminé</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Little Simz</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Damso</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Tyler The Creator</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">La Fouine</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Tiakola</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Isha &amp; Limsa</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">Dinos</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div><div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">SDM</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div></div></div></div>
+    </div>
+    <div class="actions" style="margin-top:16px">
+      <button class="btn sec" onclick="switchTab('lineup')">← Retour</button>
+      <button class="btn" onclick="shareScore()">Partager 🔥</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ───────────────────────────────────────────────────────────────────
+const LAYOUT = ['yellow','white','yellow','white','yellow','white','blue','white','blue','white','yellow','white','orange','white','yellow','white','blue','white','blue','white','yellow','white','yellow','white','yellow'];
+const CFG = {
+  white:  {pts:1,  label:'Quelconque',    cls:'tw'},
+  yellow: {pts:2,  label:'IDF/Hors-IDF',  cls:'ty'},
+  blue:   {pts:3,  label:'Hors France',   cls:'tb'},
+  orange: {pts:5,  label:'Féminin Hors UE',cls:'to'},
+  joker:  {pts:10, label:'★ Joker',       cls:'tj'},
+};
+const NAMES = ['MikiMike','Big MAQ','DEEPA','CéCé','Jini'];
+const GRIDS = [
+  // MikiMike — joker index 19 (Steve Aoki)
+  [['Franglish',0],['RK',0],['Keblack',0],['L2B',0],['Niska',0],
+   ['RNboi',0],['Makala',0],['Genezio',0],['Asap Rocky',0],['SDM',0],
+   ['Jul',0],['Landy',0],['Kelhani',0],['Leto',0],['Josman',0],
+   ['La Fouine',0],['Dystinct',0],['Damso',0],['Sean Paul',0],['Steve Aoki',1],
+   ['Kulturr',0],['Theodora',0],['Yorssy',0],['Hamza',0],['Joe Dwet Filé',0]],
+  // Big MAQ — pas de joker
+  [['Ninho',0],['Keblack',0],['ZKR',0],['Shay',0],['Leto',0],
+   ['Somyke',0],['Metro Boomin',0],['La fève',0],['Kendrick Lamar',0],['Travis Scott',0],
+   ['Orelsan',0],['Naza',0],['Shenseea',0],['Naps',0],['Gradur',0],
+   ['Eve la Marka',0],['Himra',0],['Kaaris',0],['Hamza',0],['Sara Landry',0],
+   ['Tiakola',0],['Dj Snake',0],['SCH',0],['TRZ',0],['SDM',0]],
+  // DEEPA — pas de joker
+  [['SCH',0],['Sarah Landry',0],['Maureen',0],['Hugel',0],['Ino Casablanca',0],
+   ['Gambi',0],['Burna Boy',0],['Shenseea',0],['Metro Boomin',0],['NLE Choppa',0],
+   ['Riles',0],['Luciano',0],['Tyla',0],['Roddy Ricch',0],['Ninho',0],
+   ['Kendrick Lamar',0],['Amelie Lens',0],['Charlotte de Witte',0],['Storzmí',0],['Travis Scott',0],
+   ['La Mano 1.9',0],['Vladimir Cauchemar',0],['Dakeez',0],['RNboi',0],['SDM',0]],
+  // CéCé — joker index 3 (Skrillex)
+  [['Ninho',0],['Sean Paul',0],['SCH',0],['Skrillex',1],['Leto',0],
+   ['Isha & Limsa',0],['Damso',0],['Billie Eilish',0],['Nemzzz',0],['Kaytranada',0],
+   ['Josman',0],['Bob Sinclar',0],['Doechii',0],['The Weeknd',0],['Gradur',0],
+   ['Little Simz',0],['Hamza',0],['Bruno Mars',0],['Rema',0],['Aminé',0],
+   ['Niska',0],['Theodora',0],['Gros Mo',0],['Amaarae',0],['Huntrill',0]],
+  // Jini — joker index 11 (Fred Again)
+  [['Ninho',0],['Kaytranada',0],['SCH',0],['Jorja Smith',0],['Genezio',0],
+   ['Amaarae',0],['Makala',0],['Hamza',0],['Asap Rocky',0],['Theodora',0],
+   ['Gradur',0],['Fred Again',1],['Doechii',0],['Oboy',0],['Josman',0],
+   ['Aminé',0],['Little Simz',0],['Damso',0],['Tyler The Creator',0],['La Fouine',0],
+   ['Tiakola',0],['Isha & Limsa',0],['Naza',0],['Dinos',0],['SDM',0]],
+];
+const LINEUP0 = ['aya nakamure','future','playboi carti','plk','i hate models','theodora','zkr','naza','genezio','josman','vladimir cauchemar','la mano 1.9','charlotte de witte','sniper','sinik','rohff','booba','nono la grinta','fianso','kerchak','menace santana','bigflo & oli','riles','nico moreno','kalash criminel','xvbarbar','djadja & dinaz','so la lune','miki','la rvfleuze','leto','holy priest','esdeekid','lost frequencies','todiefor','vald','black eyed peas'];
+
+// ── BUILD PLAYERS ──────────────────────────────────────────────────────────
+function buildPlayers() {
+  return GRIDS.map((grid, pi) => {
+    let jokerIndex = -1;
+    const cells = grid.map(([name, isJoker], i) => {
+      const base = LAYOUT[i];
+      const type = isJoker ? (jokerIndex = i, 'joker') : base;
+      return {base, type, name, hit: false};
+    });
+    return {name: NAMES[pi], cells, jokerIndex};
+  });
+}
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+const SKEY = 'ardentes_v3';
+let players, cur, lineup;
+
+function initState() {
+  // Priority: baked read-only > baked editable > localStorage > default
+  if (window.__RO__ && window.__S__) {
+    players = window.__S__.players; cur = window.__S__.cur||0; lineup = window.__S__.lineup||[];
+    document.body.classList.add('read-only');
+  } else if (window.__S__) {
+    players = window.__S__.players; cur = window.__S__.cur||0; lineup = window.__S__.lineup||[];
+    saveState();
+  } else {
+    try {
+      const raw = localStorage.getItem(SKEY);
+      if (raw) {
+        const s = JSON.parse(raw);
+        if (s.players && s.players.length === 5) {
+          players = s.players; cur = s.cur||0; lineup = s.lineup||[];
+          return;
+        }
+      }
+    } catch(e) {}
+    players = buildPlayers(); cur = 0; lineup = [...LINEUP0];
+  }
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(SKEY, JSON.stringify({players, cur, lineup}));
+  } catch(e) {}
+  const el = document.getElementById('saveFlash');
+  if (el) { el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove('show'), 2000); }
+}
+
+// ── EXPORT ─────────────────────────────────────────────────────────────────
+function doExport(readOnly) {
+  const state = {players, cur: readOnly ? 0 : cur, lineup};
+  const json = JSON.stringify(state).replace(/</g, '\\u003c');
+  const tag = '<scr'+'ipt id="__b__">window.__S__='+json+';'+(readOnly?'window.__RO__=true;':'')+'<'+'/script>';
+  let src = document.documentElement.outerHTML;
+  // Remove previous baked tag if any
+  const s = src.indexOf('<scr'+'ipt id="__b__">');
+  if (s !== -1) { const e = src.indexOf('<'+'/script>', s) + 9; src = src.slice(0,s) + src.slice(e); }
+  src = src.replace('</head>', tag+'\n</head>');
+  const blob = new Blob(['<!DOCTYPE html>\n'+src], {type:'text/html;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = readOnly ? 'ardentes-bingo-spectateurs.html' : 'ardentes-bingo.html';
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+// ── TABS ───────────────────────────────────────────────────────────────────
+function switchTab(id) {
+  document.querySelectorAll('.tab-g').forEach((t,i) => t.classList.toggle('active', ['grilles','lineup','resultats'][i]===id));
+  document.querySelectorAll('.panel-g').forEach(p => p.classList.remove('active'));
+  document.getElementById('pg-'+id).classList.add('active');
+}
+
+// ── RENDER PLAYER TABS ─────────────────────────────────────────────────────
+function renderTabs() {
+  document.getElementById('playerTabs').innerHTML = players.map((p,i) =>
+    `<div class="player-tab${i===cur?' active':''}${p.jokerIndex!==-1?' has-joker':''}" onclick="selectPlayer(${i})">
+      <span class="joker-used">★</span>${p.name}<span class="p-score">${score(p)} pts</span>
+    </div>`
+  ).join('');
+}
+
+function selectPlayer(i) { cur = i; renderTabs(); renderGrid(); renderJoker(); renderScore(); }
+
+// ── RENDER JOKER BANNER ────────────────────────────────────────────────────
+function renderJoker() {
+  const p = players[cur];
+  const el = document.getElementById('jokerBanner');
+  if (p.jokerIndex === -1) {
+    el.innerHTML = `<div class="joker-banner"><div class="ji"><strong>★ JOKER disponible</strong><br><span style="opacity:.6;font-size:.62rem">Clique sur une case blanche pour la transformer en Joker (10 pts)</span></div></div>`;
+  } else {
+    const name = p.cells[p.jokerIndex].name;
+    el.innerHTML = `<div class="joker-banner used"><div class="ji ul">★ Joker placé${name?' sur <strong>'+name+'</strong>':''}</div><button class="bjc" onclick="cancelJoker()">Annuler le joker</button></div>`;
+  }
+}
+
+function cancelJoker() {
+  const p = players[cur], c = p.cells[p.jokerIndex];
+  c.type = c.base; c.hit = !!(c.name && lineup.includes(c.name.toLowerCase()));
+  p.jokerIndex = -1;
+  renderAll(); saveState();
+}
+
+// ── RENDER GRID ────────────────────────────────────────────────────────────
+function renderGrid() {
+  const p = players[cur], noJ = p.jokerIndex === -1;
+  const g = document.getElementById('grid');
+  g.innerHTML = '';
+  p.cells.forEach((cell, i) => {
+    const cfg = CFG[cell.type];
+    const canJ = noJ && cell.type === 'white';
+    const div = document.createElement('div');
+    div.className = `cell ${cfg.cls}${cell.hit?' hit':''}${canJ?' cj':''}`;
+    div.dataset.i = i;
+    let h = cell.type==='joker' ? '<span class="cjs">★</span>' : '';
+    if (cell.name) h += `<span class="cn">${cell.name}</span><span class="cl">${cfg.label}</span><span class="cp">${cfg.pts}pt</span>`;
+    else           h += `<span class="cph">+ Artiste</span><span class="cp">${cfg.pts}pt</span>`;
+    div.innerHTML = h;
+    div.addEventListener('click', () => cellClick(i));
+    g.appendChild(div);
+  });
+}
+
+function cellClick(i) {
+  const p = players[cur], cell = p.cells[i];
+  if (cell.type === 'white' && p.jokerIndex === -1) { showMenu(i); return; }
+  editCell(i);
+}
+
+function showMenu(i) {
+  document.querySelectorAll('.cell-menu').forEach(m => m.remove());
+  const div = document.getElementById('grid').querySelector('[data-i="'+i+'"]');
+  const r = div.getBoundingClientRect();
+  const m = document.createElement('div');
+  m.className = 'cell-menu';
+  m.style.cssText = `position:fixed;z-index:300;top:${r.bottom+4}px;left:${r.left}px;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:6px;display:flex;flex-direction:column;gap:5px;min-width:${r.width}px;box-shadow:0 8px 24px rgba(0,0,0,.6)`;
+  m.innerHTML =
+    `<button onclick="editCell(${i});document.querySelectorAll('.cell-menu').forEach(x=>x.remove())" style="background:#222;border:1px solid #333;color:#fff;font-family:'Space Mono',monospace;font-size:.65rem;padding:6px 10px;border-radius:5px;cursor:pointer;text-align:left">✏️ Modifier le nom</button>
+     <button onclick="placeJoker(${i});document.querySelectorAll('.cell-menu').forEach(x=>x.remove())" style="background:#001a08;border:1px solid #00c853;color:#69ff9a;font-family:'Space Mono',monospace;font-size:.65rem;padding:6px 10px;border-radius:5px;cursor:pointer;text-align:left">★ Transformer en Joker (10pts)</button>`;
+  document.body.appendChild(m);
+  setTimeout(() => document.addEventListener('click', function h(e){ if(!m.contains(e.target)){m.remove();document.removeEventListener('click',h);} }), 10);
+}
+
+function placeJoker(i) {
+  const p = players[cur];
+  if (p.jokerIndex !== -1) return;
+  p.jokerIndex = i; p.cells[i].type = 'joker';
+  p.cells[i].hit = !!(p.cells[i].name && lineup.includes(p.cells[i].name.toLowerCase()));
+  renderAll(); saveState();
+}
+
+function editCell(i) {
+  const p = players[cur], cell = p.cells[i], cfg = CFG[cell.type];
+  const div = document.getElementById('grid').querySelector('[data-i="'+i+'"]');
+  div.className = `cell ${cfg.cls} editing`;
+  div.innerHTML = `${cell.type==='joker'?'<span class="cjs">★</span>':''}<input id="ci${i}" value="${cell.name.replace(/"/g,'&quot;')}" placeholder="Artiste…" maxlength="30"><span class="cp">${cfg.pts}pt</span>`;
+  const inp = document.getElementById('ci'+i);
+  inp.focus(); inp.select();
+  const done = () => saveCell(i);
+  inp.addEventListener('keydown', e => { if (e.key==='Enter'||e.key==='Tab') done(); });
+  inp.addEventListener('blur', done);
+}
+
+function saveCell(i) {
+  const inp = document.getElementById('ci'+i);
+  if (!inp) return;
+  const p = players[cur];
+  p.cells[i].name = inp.value.trim();
+  p.cells[i].hit = !!(p.cells[i].name && lineup.includes(p.cells[i].name.toLowerCase()));
+  renderAll(); saveState();
+}
+
+// ── SCORE ──────────────────────────────────────────────────────────────────
+function score(p) {
+  return p.cells.filter(c=>c.hit).reduce((s,c)=>s+CFG[c.type].pts,0) + (bingo(p)?50:0);
+}
+
+function renderScore() {
+  const p = players[cur];
+  document.getElementById('scoreVal').textContent = score(p);
+  document.getElementById('hitCount').textContent = p.cells.filter(c=>c.hit).length;
+  document.getElementById('totalCells').textContent = p.cells.filter(c=>c.name).length;
+  const badge = document.getElementById('bingoBadge');
+  if (bingo(p)) {
+    badge.classList.add('show');
+    if (!badge.dataset.fired) { badge.dataset.fired='1'; confetti(); }
+  } else { badge.classList.remove('show'); delete badge.dataset.fired; }
+}
+
+function bingo(p) {
+  const s=5, g=p.cells.map(c=>c.hit);
+  for(let r=0;r<s;r++) if(Array.from({length:s},(_,c)=>g[r*s+c]).every(Boolean)) return true;
+  for(let c=0;c<s;c++) if(Array.from({length:s},(_,r)=>g[r*s+c]).every(Boolean)) return true;
+  if(Array.from({length:s},(_,i)=>g[i*s+i]).every(Boolean)) return true;
+  if(Array.from({length:s},(_,i)=>g[i*s+(s-1-i)]).every(Boolean)) return true;
+  return false;
+}
+
+// ── LINEUP ─────────────────────────────────────────────────────────────────
+function addArtist() {
+  const inp = document.getElementById('lineupInput');
+  inp.value.split(',').forEach(a => {
+    const n = a.trim().toLowerCase();
+    if (n && !lineup.includes(n)) lineup.push(n);
+  });
+  inp.value = '';
+  syncHits(); renderAll(); saveState();
+}
+
+function removeArtist(name) {
+  lineup = lineup.filter(a => a !== name);
+  syncHits(); renderAll(); saveState();
+}
+
+function syncHits() {
+  players.forEach(p => p.cells.forEach(c => { c.hit = !!(c.name && lineup.includes(c.name.toLowerCase())); }));
+}
+
+function renderLineup() {
+  const el = document.getElementById('lineupTags');
+  if (!lineup.length) { el.innerHTML = '<span style="color:var(--muted);font-size:.7rem;align-self:center">Aucun artiste ajouté</span>'; return; }
+  el.innerHTML = lineup.map(a => {
+    const match = players.some(p => p.cells.some(c => c.name && c.name.toLowerCase()===a));
+    const safe = a.replace(/'/g,"\\'");
+    return `<div class="tag${match?' match':''}">${a}${match?' ✓':''}<span class="tag-del" onclick="removeArtist('${safe}')">×</span></div>`;
+  }).join('');
+}
+
+// ── RESULTS ────────────────────────────────────────────────────────────────
+function calcResults() {
+  syncHits(); renderAll();
+  const ranked = players.map(p => ({name:p.name, s:score(p), hits:p.cells.filter(c=>c.hit).length, tot:p.cells.filter(c=>c.name).length, b:bingo(p)})).sort((a,b)=>b.s-a.s);
+  const M = ['🥇','🥈','🥉'];
+  document.getElementById('leaderboard').innerHTML = ranked.map((r,i) =>
+    `<div class="lb-row${i<3?' r'+(i+1):''}">
+      <div class="lb-rank">${i<3?M[i]:'<span style="color:var(--muted);font-size:1rem">#'+(i+1)+'</span>'}</div>
+      <div style="flex:1"><div class="lb-name">${r.name}${r.b?'<span class="lb-bingo">🎉 BINGO</span>':''}</div><div class="lb-det">${r.hits}/${r.tot} artistes${r.b?' · +50 pts bonus':''}</div></div>
+      <div class="lb-score${i>=3?' other':''}">${r.s}</div>
+    </div>`
+  ).join('');
+
+  let det = '';
+  players.forEach(p => {
+    const named = p.cells.filter(c=>c.name);
+    if (!named.length) return;
+    det += `<div style="margin-bottom:20px"><div class="sec-title" style="margin-bottom:10px">${p.name} — ${score(p)} pts</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px">`;
+    const typeColor = t => t==='joker'?'var(--cj-br)':t==='yellow'?'var(--cy-br)':t==='blue'?'var(--cb-br)':t==='orange'?'var(--co-br)':'#555';
+    const typeText  = t => t==='joker'?'var(--cj-tx)':t==='yellow'?'var(--cy-tx)':t==='blue'?'var(--cb-tx)':t==='orange'?'var(--co-tx)':'#ddd';
+    named.filter(c=>c.hit).forEach(c => {
+      det += `<div style="background:var(--card);border:1px solid ${typeColor(c.type)};border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:${typeText(c.type)}">${c.name}${c.type==='joker'?' ★':''}</div><div style="font-size:.55rem;opacity:.45;text-transform:uppercase;margin:2px 0">${CFG[c.type].label}</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--gold)">+${CFG[c.type].pts}</div></div>`;
+    });
+    named.filter(c=>!c.hit).forEach(c => {
+      det += `<div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center"><div style="font-size:.7rem;font-weight:700;color:var(--muted)">${c.name}</div><div style="font-family:'Black Han Sans',sans-serif;font-size:1.2rem;color:var(--muted)">—</div></div>`;
+    });
+    det += '</div></div>';
+  });
+  document.getElementById('playerDetail').innerHTML = det || '<div class="empty">Remplis les grilles d\'abord !</div>';
+  if (ranked[0]?.b) confetti();
+}
+
+function shareScore() {
+  const ranked = players.map(p=>({name:p.name,s:score(p),b:bingo(p)})).sort((a,b)=>b.s-a.s);
+  const text = '🔥 Les Ardentes Bingo\n\n'+ranked.map((r,i)=>`${['🥇','🥈','🥉'][i]||'#'+(i+1)} ${r.name} — ${r.s} pts${r.b?' 🎉':''}`).join('\n')+'\n\n#LesArdentes #Bingo';
+  if (navigator.share) navigator.share({text}); else navigator.clipboard.writeText(text).then(()=>alert('Classement copié !'));
+}
+
+// ── CONFETTI ───────────────────────────────────────────────────────────────
+function confetti() {
+  const cv = document.getElementById('confetti'), ctx = cv.getContext('2d');
+  cv.width = window.innerWidth; cv.height = window.innerHeight;
+  const cols = ['#FF3B00','#FF9100','#FFD000','#5BB8FF','#FF8C42','#69ff9a','#fff'];
+  const ps = Array.from({length:160},()=>({x:Math.random()*cv.width,y:-10-Math.random()*200,r:4+Math.random()*6,c:cols[Math.floor(Math.random()*cols.length)],vx:(Math.random()-.5)*4,vy:3+Math.random()*4,rot:Math.random()*360,vr:(Math.random()-.5)*8,sh:Math.random()>.5}));
+  let f=0;
+  (function a(){ctx.clearRect(0,0,cv.width,cv.height);ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot*Math.PI/180);ctx.fillStyle=p.c;if(p.sh){ctx.beginPath();ctx.arc(0,0,p.r,0,Math.PI*2);ctx.fill();}else ctx.fillRect(-p.r,-p.r/2,p.r*2,p.r);ctx.restore();});if(++f<220)requestAnimationFrame(a);else ctx.clearRect(0,0,cv.width,cv.height);})();
+}
+
+// ── RENDER ALL ─────────────────────────────────────────────────────────────
+function renderAll() { renderTabs(); renderGrid(); renderJoker(); renderScore(); renderLineup(); }
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+initState();
+syncHits();
+renderAll();
+if (window.__RO__) { calcResults(); switchTab('resultats'); }
+</script>
+
+
+</body></html>
